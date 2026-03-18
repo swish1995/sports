@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}시험 기록{% endblock %}
+
+{% block content %}
+<h1>시험 기록</h1>
+
+<!-- 과목별 통계 -->
+{% if subject_stats %}
+<section class="exam-section">
+    <h2>과목별 정답률</h2>
+    <div class="stats-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>과목</th>
+                    <th>응시</th>
+                    <th>총 문항</th>
+                    <th>정답</th>
+                    <th>정답률</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in subject_stats %}
+                <tr>
+                    <td>{{ s.name }}</td>
+                    <td>{{ s.attempts }}</td>
+                    <td>{{ s.total_questions }}</td>
+                    <td>{{ s.correct or 0 }}</td>
+                    <td>
+                        <div class="mini-bar-wrap">
+                            <div class="mini-bar {{ 'pass' if (s.avg_score or 0) >= 60 else 'fail' }}"
+                                 style="width: {{ s.avg_score or 0 }}%"></div>
+                            <span>{{ s.avg_score or 0 }}%</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+
+<!-- 시험 기록 -->
+<section class="exam-section">
+    <h2>전체 시험 기록</h2>
+    {% if sessions %}
+    <div class="history-list full">
+        {% for s in sessions %}
+        <a href="/result/{{ s.id }}" class="history-item">
+            <div class="history-type">
+                {{ '필기' if s.test_type == 'written' else '구술' }}
+            </div>
+            <div class="history-info">
+                <div>{{ s.selected_subjects }}</div>
+                <div class="history-date">{{ s.finished_at[:16] if s.finished_at else s.started_at[:16] }}</div>
+            </div>
+            <div class="history-detail">
+                {{ s.correct_count }}/{{ s.total_questions }}
+            </div>
+            <div class="history-score {{ 'pass' if s.is_passed else 'fail' }}">
+                {{ s.score_percent }}%
+                <small>{{ '합격' if s.is_passed else '불합격' }}</small>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty-message">아직 시험 기록이 없습니다.</p>
+    {% endif %}
+</section>
+{% endblock %}

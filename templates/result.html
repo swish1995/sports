@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}시험 결과{% endblock %}
+
+{% block content %}
+<div class="result-header {{ 'pass' if session.is_passed else 'fail' }}">
+    <h1>{{ '합격 ✓' if session.is_passed else '불합격 ✗' }}</h1>
+    <div class="result-score">{{ session.score_percent }}%</div>
+    <div class="result-detail">
+        {{ session.correct_count }} / {{ session.total_questions }} 정답
+        {% if session.time_spent_sec %}
+        · {{ (session.time_spent_sec // 60) }}분 {{ session.time_spent_sec % 60 }}초 소요
+        {% endif %}
+    </div>
+</div>
+
+<section class="result-section">
+    <h2>과목별 성적</h2>
+    <div class="score-grid">
+        {% for name, s in subject_scores.items() %}
+        <div class="score-card {{ 'pass' if s.passed else 'fail' }}">
+            <div class="score-subject">{{ name }}</div>
+            <div class="score-bar-wrap">
+                <div class="score-bar" style="width: {{ s.score }}%"></div>
+            </div>
+            <div class="score-detail">
+                {{ s.correct }}/{{ s.total }} ({{ s.score }}%)
+                {% if not s.passed %}<span class="fail-mark">과락</span>{% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="pass-criteria">
+        <p>합격 기준: 과목별 40% 이상 + 전체 평균 60% 이상</p>
+        {% if session.test_type == 'oral' %}
+        <p>구술시험 합격 기준: 70% 이상</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="result-section">
+    <h2>문제별 결과</h2>
+    <div class="filter-buttons">
+        <button class="btn btn-sm active" onclick="filterQuestions('all', this)">전체</button>
+        <button class="btn btn-sm" onclick="filterQuestions('wrong', this)">오답만</button>
+        <button class="btn btn-sm" onclick="filterQuestions('correct', this)">정답만</button>
+    </div>
+
+    {% set ns = namespace(q_num=0, current_subject='') %}
+    {% for a in answers %}
+        {% if a.subject_name != ns.current_subject %}
+            {% set ns.current_subject = a.subject_name %}
+            <h3 class="result-subject-header">{{ a.subject_name }}</h3>
+        {% endif %}
+        {% set ns.q_num = ns.q_num + 1 %}
+
+        <div class="result-question {{ 'correct' if a.is_correct else 'wrong' }}"
+             data-result="{{ 'correct' if a.is_correct else 'wrong' }}">
+            <div class="rq-header">
+                <div class="rq-left">
+                    <span class="rq-number">Q{{ ns.q_num }}</span>
+                    {% if a.exam_year %}
+                    <div class="exam-info-tooltip">
+                        <span class="info-icon">ℹ</span>
+                        <div class="tooltip-content">
+                            {{ a.exam_year }}년 {{ a.exam_type or '' }}형 {{ a.question_number or '' }}번
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <span class="rq-badge {{ 'correct' if a.is_correct else 'wrong' }}">
+                    {{ '정답' if a.is_correct else '오답' }}
+                </span>
+            </div>
+            <div class="rq-text">{{ a.question_text|format_question }}</div>
+
+            {% if a.option_a %}
+            <div class="rq-options">
+                {% for key, val in [('A', a.option_a), ('B', a.option_b), ('C', a.option_c), ('D', a.option_d)] %}
+                {% if val %}
+                <div class="rq-option
+                    {% if key == a.correct_answer %}rq-correct{% endif %}
+                    {% if key == a.user_answer and not a.is_correct %}rq-wrong{% endif %}">
+                    <span class="option-key">{{ loop.index }}</span> {{ val }}
+                    {% if key == a.correct_answer %}✓{% endif %}
+                    {% if key == a.user_answer and not a.is_correct %}✗{% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if not a.is_correct and a.user_answer %}
+            <div class="rq-your-answer">내 답: {{ a.user_answer }}</div>
+            {% elif not a.is_correct %}
+            <div class="rq-your-answer">미응답</div>
+            {% endif %}
+
+            {% if a.comment %}
+            <div class="rq-explanation">
+                <strong>코멘트:</strong> {{ a.comment|nl2br }}
+            </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+</section>
+
+<div class="result-actions">
+    <a href="/" class="btn btn-primary">새 시험 보기</a>
+    <a href="/history" class="btn btn-secondary">기록 보기</a>
+</div>
+
+<script>
+function filterQuestions(type, btn) {
+    document.querySelectorAll('.filter-buttons .btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.result-question').forEach(q => {
+        if (type === 'all') q.style.display = 'block';
+        else q.style.display = q.dataset.result === type ? 'block' : 'none';
+    });
+}
+</script>
+{% endblock %}

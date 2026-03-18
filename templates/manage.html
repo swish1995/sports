@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}문제 관리{% endblock %}
+
+{% block content %}
+<h1>문제 관리</h1>
+
+<!-- 과목별 문제 수 -->
+<section class="exam-section">
+    <h2>현재 등록된 문제</h2>
+    <div class="stats-table">
+        <table>
+            <thead>
+                <tr><th>과목</th><th>유형</th><th>문제 수</th></tr>
+            </thead>
+            <tbody>
+                {% for s in subjects %}
+                <tr>
+                    <td>{{ s.name }}</td>
+                    <td>{{ '필기' if s.category == 'written' else '구술' }}</td>
+                    <td>{{ s.question_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- 파일 임포트 -->
+<section class="exam-section">
+    <h2>파일로 문제 가져오기</h2>
+    <form action="/manage/import" method="POST" enctype="multipart/form-data" class="import-form">
+        <div class="file-upload">
+            <input type="file" name="file" accept=".json,.pdf" id="importFile">
+            <label for="importFile" class="btn btn-secondary">파일 선택 (JSON / PDF)</label>
+        </div>
+        <button type="submit" class="btn btn-primary">가져오기</button>
+    </form>
+
+    <div class="import-guide">
+        <h3>JSON 형식 가이드</h3>
+        <pre><code>[
+  {
+    "subject": "스포츠윤리",
+    "type": "multiple_choice",
+    "question": "문제 텍스트",
+    "options": ["보기1", "보기2", "보기3", "보기4", "보기5"],
+    "answer": "A",
+    "explanation": "해설"
+  },
+  {
+    "subject": "보디빌딩",
+    "type": "oral",
+    "question": "구술 문제",
+    "answer": "모범답안 텍스트",
+    "explanation": "보충 설명"
+  }
+]</code></pre>
+
+        <h3>PDF 형식 가이드</h3>
+        <p>아래 형식으로 작성된 PDF를 자동 파싱합니다:</p>
+        <pre><code>1. 문제 텍스트
+①보기1 ②보기2 ③보기3 ④보기4 ⑤보기5
+정답: 3
+해설: 해설 텍스트</code></pre>
+        <p class="note">※ PDF 임포트 시 과목 자동 분류가 어려워 수동 확인이 필요할 수 있습니다.</p>
+    </div>
+</section>
+
+<!-- 수동 문제 추가 -->
+<section class="exam-section">
+    <h2>직접 문제 추가</h2>
+    <form action="/manage/add" method="POST" class="add-form" id="addForm">
+        <div class="form-group">
+            <label>과목</label>
+            <select name="subject" id="subjectSelect">
+                {% for s in subjects %}
+                <option value="{{ s.name }}">{{ s.name }} ({{ s.category }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>유형</label>
+            <select name="question_type" id="typeSelect" onchange="toggleType()">
+                <option value="multiple_choice">객관식 (5지선다)</option>
+                <option value="oral">구술</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>문제</label>
+            <textarea name="question_text" rows="3" required placeholder="문제를 입력하세요"></textarea>
+        </div>
+
+        <div id="mcOptions">
+            <div class="form-group">
+                <label>보기 A</label>
+                <input type="text" name="option_a" placeholder="보기 1">
+            </div>
+            <div class="form-group">
+                <label>보기 B</label>
+                <input type="text" name="option_b" placeholder="보기 2">
+            </div>
+            <div class="form-group">
+                <label>보기 C</label>
+                <input type="text" name="option_c" placeholder="보기 3">
+            </div>
+            <div class="form-group">
+                <label>보기 D</label>
+                <input type="text" name="option_d" placeholder="보기 4">
+            </div>
+            <div class="form-group">
+                <label>보기 E</label>
+                <input type="text" name="option_e" placeholder="보기 5">
+            </div>
+            <div class="form-group">
+                <label>정답</label>
+                <select name="correct_answer">
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="E">E</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="oralAnswer" style="display:none">
+            <div class="form-group">
+                <label>모범답안</label>
+                <textarea name="correct_answer" rows="4" placeholder="모범답안을 입력하세요"></textarea>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>해설 (선택)</label>
+            <textarea name="explanation" rows="2" placeholder="해설을 입력하세요"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">문제 추가</button>
+    </form>
+</section>
+
+<script>
+function toggleType() {
+    const type = document.getElementById('typeSelect').value;
+    document.getElementById('mcOptions').style.display = type === 'multiple_choice' ? 'block' : 'none';
+    document.getElementById('oralAnswer').style.display = type === 'oral' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

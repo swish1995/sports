@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}문제 편집 - #{{ q.id }}{% endblock %}
+
+{% block content %}
+<div class="edit-header">
+    <h1>문제 편집</h1>
+    <span class="edit-id">#{{ q.id }}</span>
+</div>
+
+<form action="/edit/{{ q.id }}/save" method="POST" class="edit-form">
+    <input type="hidden" name="return_url" value="{{ request.args.get('return_url', '/edit') }}">
+
+    <!-- 메타 정보 -->
+    <div class="edit-meta-row">
+        <div class="form-group">
+            <label>과목</label>
+            <select name="subject">
+                {% for s in subjects %}
+                <option value="{{ s.name }}" {{ 'selected' if s.name == q.subject_name }}>
+                    {{ s.name }} ({{ s.category }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>연도</label>
+            <input type="text" name="exam_year" value="{{ q.exam_year or '' }}" placeholder="2025">
+        </div>
+        <div class="form-group">
+            <label>유형</label>
+            <input type="text" name="exam_type" value="{{ q.exam_type or '' }}" placeholder="A">
+        </div>
+        <div class="form-group">
+            <label>문항번호</label>
+            <input type="number" name="question_number" value="{{ q.question_number or '' }}" placeholder="1">
+        </div>
+    </div>
+
+    <!-- 지문 -->
+    <div class="form-group">
+        <label>지문 <small class="hint">Enter로 줄바꿈</small></label>
+        <textarea name="question_text" rows="6" class="edit-textarea">{{ q.question_text }}</textarea>
+    </div>
+
+    <!-- 보기 -->
+    {% if q.question_type == 'multiple_choice' %}
+    <div class="edit-options-grid">
+        <div class="form-group">
+            <label>① 보기 A</label>
+            <textarea name="option_a" rows="2">{{ q.option_a or '' }}</textarea>
+        </div>
+        <div class="form-group">
+            <label>② 보기 B</label>
+            <textarea name="option_b" rows="2">{{ q.option_b or '' }}</textarea>
+        </div>
+        <div class="form-group">
+            <label>③ 보기 C</label>
+            <textarea name="option_c" rows="2">{{ q.option_c or '' }}</textarea>
+        </div>
+        <div class="form-group">
+            <label>④ 보기 D</label>
+            <textarea name="option_d" rows="2">{{ q.option_d or '' }}</textarea>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>정답</label>
+        <select name="correct_answer" class="answer-select">
+            <option value="A" {{ 'selected' if q.correct_answer == 'A' }}>① A</option>
+            <option value="B" {{ 'selected' if q.correct_answer == 'B' }}>② B</option>
+            <option value="C" {{ 'selected' if q.correct_answer == 'C' }}>③ C</option>
+            <option value="D" {{ 'selected' if q.correct_answer == 'D' }}>④ D</option>
+            <option value="ALL" {{ 'selected' if q.correct_answer == 'ALL' }}>전부 정답</option>
+        </select>
+    </div>
+    {% else %}
+    <div class="form-group">
+        <label>모범답안</label>
+        <textarea name="correct_answer" rows="4">{{ q.correct_answer or '' }}</textarea>
+    </div>
+    {% endif %}
+
+    <!-- 코멘트 -->
+    <div class="form-group">
+        <label>코멘트 <small class="hint">시험 중 💡 아이콘으로 표시됨, 결과에서 해설로 표시됨, Enter로 줄바꿈</small></label>
+        <textarea name="comment" rows="4" placeholder="해설, 암기 포인트, 헷갈리는 부분 등...">{{ q.comment or '' }}</textarea>
+    </div>
+
+    <!-- 버튼 -->
+    <div class="edit-actions">
+        <button type="submit" class="btn btn-primary">저장</button>
+        <a href="{{ request.args.get('return_url', '/edit') }}" class="btn btn-secondary">취소</a>
+    </div>
+</form>
+
+<!-- 삭제 -->
+<form action="/edit/{{ q.id }}/delete" method="POST" class="delete-form"
+      onsubmit="return confirm('정말 삭제하시겠습니까?')">
+    <input type="hidden" name="return_url" value="{{ request.args.get('return_url', '/edit') }}">
+    <button type="submit" class="btn btn-danger">문제 삭제</button>
+</form>
+{% endblock %}

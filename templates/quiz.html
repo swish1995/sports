@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}필기시험 진행 중{% endblock %}
+
+{% block content %}
+<div class="quiz-header">
+    <div class="quiz-info">
+        <h2>필기시험</h2>
+        <span>{{ session.selected_subjects }}</span>
+    </div>
+    <div class="quiz-timer" id="timer">
+        <span id="timeDisplay">100:00</span>
+    </div>
+</div>
+
+<div class="quiz-progress">
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+    </div>
+    <span id="progressText">0 / {{ answers|length }}</span>
+</div>
+
+<!-- 과목 탭 -->
+<div class="subject-tabs" id="subjectTabs">
+    {% set ns = namespace(subjects=[]) %}
+    {% for a in answers %}
+        {% if a.subject_name not in ns.subjects %}
+            {% set ns.subjects = ns.subjects + [a.subject_name] %}
+        {% endif %}
+    {% endfor %}
+    {% for subject in ns.subjects %}
+    <button class="tab-btn {% if loop.first %}active{% endif %}"
+            onclick="showSubject('{{ subject }}', this)">
+        {{ subject }}
+        <span class="tab-count" id="tab-{{ loop.index }}">0/{{ answers|selectattr('subject_name', 'equalto', subject)|list|length }}</span>
+    </button>
+    {% endfor %}
+</div>
+
+<form action="/quiz/{{ session.id }}/submit" method="POST" id="quizForm">
+    <input type="hidden" name="time_spent" id="timeSpent" value="0">
+
+    {% set ns2 = namespace(current_subject='', q_num=0, sub_num=0) %}
+    {% for a in answers %}
+        {% if a.subject_name != ns2.current_subject %}
+            {% if ns2.current_subject %}
+                </div>
+            {% endif %}
+            {% set ns2.current_subject = a.subject_name %}
+            {% set ns2.sub_num = ns2.sub_num + 1 %}
+            <div class="subject-section" data-subject="{{ a.subject_name }}"
+                 {% if ns2.sub_num > 1 %}style="display:none"{% endif %}>
+        {% endif %}
+        {% set ns2.q_num = ns2.q_num + 1 %}
+
+        <div class="question-card" id="q-{{ a.question_id }}">
+            <div class="question-header">
+                <div class="question-number">Q{{ ns2.q_num }}.</div>
+                {% if a.exam_year %}
+                <div class="exam-info-tooltip">
+                    <span class="info-icon">ℹ</span>
+                    <div class="tooltip-content">
+                        {{ a.exam_year }}년 {{ a.exam_type or '' }}형 {{ a.question_number or '' }}번
+                    </div>
+                </div>
+                {% endif %}
+                {% if a.comment %}
+                <div class="exam-info-tooltip">
+                    <span class="hint-icon">💡</span>
+                    <div class="tooltip-content tooltip-hint">
+                        {{ a.comment|nl2br }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="question-text">{{ a.question_text|format_question }}</div>
+            <div class="options">
+                {% for opt_key, opt_val in [('A', a.option_a), ('B', a.option_b), ('C', a.option_c), ('D', a.option_d)] %}
+                {% if opt_val %}
+                <label class="option-label">
+                    <input type="radio" name="q_{{ a.question_id }}" value="{{ opt_key }}"
+                           onchange="markAnswered({{ a.question_id }})">
+                    <span class="option-key">{{ loop.index }}</span>
+                    <span class="option-text">{{ opt_val }}</span>
+                </label>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+
+    <div class="quiz-nav">
+        <button type="button" class="btn btn-secondary" onclick="prevSubject()">← 이전 과목</button>
+        <button type="button" class="btn btn-secondary" onclick="nextSubject()">다음 과목 →</button>
+    </div>
+
+    <div class="quiz-submit">
+        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn"
+                onclick="return confirmSubmit()">
+            시험 제출
+        </button>
+    </div>
+</form>
+
+<script>
+const timeLimit = {{ session.time_limit_sec or 6000 }};
+let timeLeft = timeLimit;
+let elapsed = 0;
+
+const timerInterval = setInterval(() => {
+    timeLeft--;
+    elapsed++;
+    document.getElementById('timeSpent').value = elapsed;
+    const min = Math.floor(timeLeft / 60);
+    const sec = timeLeft % 60;
+    document.getElementById('timeDisplay').textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+    if (timeLeft <= 300) document.getElementById('timer').classList.add('timer-warning');
+    if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        alert('시간이 종료되었습니다. 자동 제출됩니다.');
+        document.getElementById('quizForm').submit();
+    }
+}, 1000);
+
+let currentTabIndex = 0;
+const sections = document.querySelectorAll('.subject-section');
+const tabBtns = document.querySelectorAll('.tab-btn');
+
+function showSubject(name, btn) {
+    sections.forEach(s => s.style.display = s.dataset.subject === name ? 'block' : 'none');
+    tabBtns.forEach((b, i) => { b.classList.toggle('active', b === btn); if (b === btn) currentTabIndex = i; });
+}
+function prevSubject() { if (currentTabIndex > 0) tabBtns[currentTabIndex - 1].click(); }
+function nextSubject() { if (currentTabIndex < tabBtns.length - 1) tabBtns[currentTabIndex + 1].click(); }
+
+function markAnswered(qId) { updateProgress(); }
+function updateProgress() {
+    const total = {{ answers|length }};
+    const answered = document.querySelectorAll('#quizForm input[type="radio"]:checked').length;
+    document.getElementById('progressText').textContent = `${answered} / ${total}`;
+    document.getElementById('progressFill').style.width = `${(answered/total*100)}%`;
+    tabBtns.forEach((btn, i) => {
+        const section = sections[i];
+        if (!section) return;
+        const sTotal = section.querySelectorAll('.question-card').length;
+        const sAnswered = section.querySelectorAll('input[type="radio"]:checked').length;
+        const countEl = btn.querySelector('.tab-count');
+        if (countEl) countEl.textContent = `${sAnswered}/${sTotal}`;
+    });
+}
+function confirmSubmit() {
+    const total = {{ answers|length }};
+    const answered = document.querySelectorAll('#quizForm input[type="radio"]:checked').length;
+    if (answered < total) return confirm(`아직 ${total - answered}문제를 풀지 않았습니다. 제출하시겠습니까?`);
+    return confirm('시험을 제출하시겠습니까?');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}오답노트{% endblock %}
+
+{% block content %}
+<h1>오답노트</h1>
+
+<div class="filter-bar">
+    <a href="/wrong" class="btn btn-sm {{ 'active' if not current_filter else '' }}">전체</a>
+    {% for s in subjects %}
+    <a href="/wrong?subject={{ s.name }}"
+       class="btn btn-sm {{ 'active' if current_filter == s.name else '' }}">{{ s.name }}</a>
+    {% endfor %}
+</div>
+
+{% if questions %}
+<form action="/wrong/retry" method="POST">
+    <div class="wrong-actions">
+        <label class="select-all-label">
+            <input type="checkbox" id="selectAll" onchange="toggleAll(this)"> 전체 선택
+        </label>
+        <button type="submit" class="btn btn-primary">선택 문제 재시험</button>
+    </div>
+
+    {% for q in questions %}
+    <div class="wrong-card">
+        <div class="wrong-header">
+            <label>
+                <input type="checkbox" name="question_ids" value="{{ q.id }}">
+                <span class="wrong-subject">{{ q.subject_name }}</span>
+            </label>
+            <span class="wrong-count">{{ q.wrong_count }}회 오답 / {{ q.attempt_count }}회 출제</span>
+        </div>
+        <div class="wrong-text">{{ q.question_text }}</div>
+        {% if q.option_a %}
+        <div class="wrong-options">
+            {% for key, val in [('A', q.option_a), ('B', q.option_b), ('C', q.option_c), ('D', q.option_d), ('E', q.option_e)] %}
+            {% if val %}
+            <div class="wrong-option {{ 'correct' if key == q.correct_answer else '' }}">
+                {{ key }}. {{ val }} {% if key == q.correct_answer %}✓{% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if q.explanation %}
+        <div class="wrong-explanation">{{ q.explanation }}</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</form>
+{% else %}
+<p class="empty-message">오답 기록이 없습니다. 시험을 먼저 풀어보세요!</p>
+{% endif %}
+
+<script>
+function toggleAll(el) {
+    document.querySelectorAll('input[name="question_ids"]').forEach(cb => cb.checked = el.checked);
+}
+</script>
+{% endblock %}

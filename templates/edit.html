@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}문제 편집{% endblock %}
+
+{% block content %}
+<h1>문제 편집 <small class="text-muted">({{ total }}문제)</small></h1>
+
+<!-- 필터 -->
+<div class="edit-filters">
+    <form action="/edit" method="GET" class="filter-form">
+        <select name="subject" onchange="this.form.submit()">
+            <option value="">전체 과목</option>
+            {% for s in subjects %}
+            <option value="{{ s.name }}" {{ 'selected' if current_subject == s.name }}>{{ s.name }}</option>
+            {% endfor %}
+        </select>
+        <select name="year" onchange="this.form.submit()">
+            <option value="">전체 연도</option>
+            {% for y in years %}
+            <option value="{{ y.exam_year }}" {{ 'selected' if current_year == y.exam_year }}>{{ y.exam_year }}년</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<!-- 문제 목록 -->
+{% if questions %}
+<div class="edit-list">
+    {% for q in questions %}
+    <a href="/edit/{{ q.id }}?return_url={{ request.url|urlencode }}" class="edit-item">
+        <div class="edit-item-meta">
+            {% if q.exam_year %}
+            <span class="edit-tag year">{{ q.exam_year }}</span>
+            {% endif %}
+            <span class="edit-tag subject">{{ q.subject_name }}</span>
+            {% if q.question_number %}
+            <span class="edit-tag num">#{{ q.question_number }}</span>
+            {% endif %}
+            {% if q.comment %}
+            <span class="edit-tag comment-tag">메모</span>
+            {% endif %}
+        </div>
+        <div class="edit-item-text">{{ q.question_text[:120] }}{% if q.question_text|length > 120 %}...{% endif %}</div>
+        <div class="edit-item-answer">
+            정답: <strong>{{ q.correct_answer }}</strong>
+            {% if q.option_a %}
+            · ① {{ q.option_a[:20] }}{% if q.option_a|length > 20 %}..{% endif %}
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+<!-- 페이지네이션 -->
+{% if total_pages > 1 %}
+<div class="pagination">
+    {% if page > 1 %}
+    <a href="/edit?subject={{ current_subject }}&year={{ current_year }}&page={{ page - 1 }}" class="btn btn-sm">← 이전</a>
+    {% endif %}
+    <span class="page-info">{{ page }} / {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a href="/edit?subject={{ current_subject }}&year={{ current_year }}&page={{ page + 1 }}" class="btn btn-sm">다음 →</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<p class="empty-message">필터 조건에 맞는 문제가 없습니다.</p>
+{% endif %}
+{% endblock %}

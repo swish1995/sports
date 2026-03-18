@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}생활스포츠지도사 2급 - 시험 준비{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>생활스포츠지도사 2급</h1>
+    <p>필기시험 · 구술시험 준비</p>
+</div>
+
+<!-- 통계 요약 -->
+{% if stats and stats.total_sessions > 0 %}
+<div class="stats-summary">
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total_sessions }}</div>
+        <div class="stat-label">응시 횟수</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.avg_score or 0 }}%</div>
+        <div class="stat-label">평균 점수</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.passed }}</div>
+        <div class="stat-label">합격 횟수</div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 필기시험 -->
+<section class="exam-section">
+    <h2>📝 필기시험</h2>
+    <p class="section-desc">7과목 중 <strong>5과목</strong>을 선택하세요 (과목당 20문항, 100분)</p>
+
+    <form action="/written/start" method="POST" id="writtenForm">
+        <div class="subject-grid">
+            {% for s in written_subjects %}
+            <label class="subject-card {% if s.question_count == 0 %}disabled{% endif %}">
+                <input type="checkbox" name="subjects" value="{{ s.name }}"
+                       {% if s.question_count == 0 %}disabled{% endif %}>
+                <div class="subject-name">{{ s.name }}</div>
+                <div class="subject-count">{{ s.question_count }}문제</div>
+            </label>
+            {% endfor %}
+        </div>
+
+        <div class="selected-count">
+            선택: <span id="selectedCount">0</span> / 5과목
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" id="startWritten" disabled>
+            필기시험 시작
+        </button>
+    </form>
+</section>
+
+<!-- 구술시험 -->
+<section class="exam-section">
+    <h2>🎤 구술시험</h2>
+    <p class="section-desc">종목을 선택하세요 (4문항, 70% 이상 합격)</p>
+
+    <form action="/oral/start" method="POST">
+        <div class="oral-grid">
+            {% for s in oral_subjects %}
+            <label class="subject-card oral-card {% if s.question_count == 0 %}disabled{% endif %}">
+                <input type="radio" name="oral_subject" value="{{ s.name }}"
+                       {% if s.question_count == 0 %}disabled{% endif %}
+                       {% if s.name == '보디빌딩' %}checked{% endif %}>
+                <div class="subject-name">{{ s.name }}</div>
+                <div class="subject-count">{{ s.question_count }}문제</div>
+            </label>
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="btn btn-secondary btn-lg">
+            구술시험 시작
+        </button>
+    </form>
+</section>
+
+<!-- 최근 기록 -->
+{% if recent %}
+<section class="exam-section">
+    <h2>📊 최근 시험 기록</h2>
+    <div class="history-list">
+        {% for r in recent %}
+        <a href="/result/{{ r.id }}" class="history-item">
+            <div class="history-type">
+                {{ '필기' if r.test_type == 'written' else '구술' }}
+            </div>
+            <div class="history-info">
+                <div>{{ r.selected_subjects }}</div>
+                <div class="history-date">{{ r.started_at[:16] }}</div>
+            </div>
+            <div class="history-score {{ 'pass' if r.is_passed else 'fail' }}">
+                {{ r.score_percent }}%
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('#writtenForm input[type="checkbox"]');
+    const countEl = document.getElementById('selectedCount');
+    const startBtn = document.getElementById('startWritten');
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            const checked = document.querySelectorAll('#writtenForm input[type="checkbox"]:checked').length;
+            countEl.textContent = checked;
+            startBtn.disabled = checked !== 5;
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data
+      - ./questions:/app/questions
+    environment:
+      - FLASK_ENV=development
+    restart: unless-stopped

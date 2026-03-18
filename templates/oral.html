@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}구술시험 진행 중{% endblock %}
+
+{% block content %}
+<div class="quiz-header">
+    <div class="quiz-info">
+        <h2>구술시험</h2>
+        <span>{{ session.selected_subjects }}</span>
+    </div>
+</div>
+
+<form action="/oral/{{ session.id }}/submit" method="POST" id="oralForm">
+    {% for a in answers %}
+    <div class="oral-card" id="oral-{{ loop.index }}">
+        <div class="oral-number">문항 {{ loop.index }} / {{ answers|length }}</div>
+        <div class="oral-question">{{ a.question_text }}</div>
+
+        <div class="oral-answer-area">
+            <label>내 답변:</label>
+            <textarea name="answer_{{ a.question_id }}" rows="5"
+                      placeholder="구술로 답변한다고 생각하고 작성해보세요..."></textarea>
+        </div>
+
+        <div class="oral-model" id="model-{{ loop.index }}" style="display:none">
+            <div class="oral-model-header">모범답안</div>
+            <div class="oral-model-text">{{ a.correct_answer }}</div>
+            {% if a.explanation %}
+            <div class="oral-explanation">
+                <strong>보충 설명:</strong> {{ a.explanation }}
+            </div>
+            {% endif %}
+
+            <div class="oral-self-score">
+                <p>자기 채점:</p>
+                <label class="score-option pass">
+                    <input type="radio" name="score_{{ a.question_id }}" value="1"> 합격 (70% 이상)
+                </label>
+                <label class="score-option fail">
+                    <input type="radio" name="score_{{ a.question_id }}" value="0" checked> 불합격
+                </label>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-secondary"
+                onclick="showModel({{ loop.index }}, this)">
+            모범답안 보기
+        </button>
+    </div>
+    {% endfor %}
+
+    <div class="quiz-submit">
+        <button type="submit" class="btn btn-primary btn-lg">채점 완료</button>
+    </div>
+</form>
+
+<script>
+function showModel(index, btn) {
+    const model = document.getElementById('model-' + index);
+    model.style.display = 'block';
+    btn.style.display = 'none';
+}
+</script>
+{% endblock %}
