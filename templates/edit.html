@@ -7,16 +7,16 @@
 <!-- 필터 -->
 <div class="edit-filters">
     <form action="/edit" method="GET" class="filter-form">
-        <select name="subject" onchange="this.form.submit()">
-            <option value="">전체 과목</option>
-            {% for s in subjects %}
-            <option value="{{ s.name }}" {{ 'selected' if current_subject == s.name }}>{{ s.name }}</option>
-            {% endfor %}
-        </select>
         <select name="year" onchange="this.form.submit()">
             <option value="">전체 연도</option>
             {% for y in years %}
             <option value="{{ y.exam_year }}" {{ 'selected' if current_year == y.exam_year }}>{{ y.exam_year }}년</option>
+            {% endfor %}
+        </select>
+        <select name="subject" onchange="this.form.submit()">
+            <option value="">전체 과목</option>
+            {% for s in subjects %}
+            <option value="{{ s.name }}" {{ 'selected' if current_subject == s.name }}>{{ s.name }}</option>
             {% endfor %}
         </select>
     </form>
