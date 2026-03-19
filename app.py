@@ -756,7 +756,32 @@ def edit_question(question_id):
         return redirect(url_for('edit_list'))
 
     subjects = db.execute('SELECT * FROM subjects ORDER BY category, name').fetchall()
-    return render_template('edit_detail.html', q=q, subjects=subjects)
+
+    # 이전/다음 문제 네비게이션 (현재 문제의 과목+연도 기반)
+    prev_q = None
+    next_q = None
+    nav_subject = q['subject_name']
+    nav_year = q['exam_year']
+
+    if nav_subject and nav_year:
+        nav_questions = db.execute('''
+            SELECT q.id, q.question_number
+            FROM questions q JOIN subjects s ON q.subject_id = s.id
+            WHERE s.name = ? AND q.exam_year = ?
+            ORDER BY q.question_number
+        ''', (nav_subject, nav_year)).fetchall()
+
+        ids = [r['id'] for r in nav_questions]
+        if question_id in ids:
+            idx = ids.index(question_id)
+            if idx > 0:
+                prev_q = nav_questions[idx - 1]
+            if idx < len(ids) - 1:
+                next_q = nav_questions[idx + 1]
+
+    return render_template('edit_detail.html', q=q, subjects=subjects,
+                           prev_q=prev_q, next_q=next_q,
+                           nav_subject=nav_subject, nav_year=nav_year)
 
 
 @app.route('/edit/<int:question_id>/save', methods=['POST'])

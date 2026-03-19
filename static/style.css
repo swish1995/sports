@@ -899,6 +899,41 @@ body {
 .edit-header h1 { margin: 0; }
 .edit-id { color: var(--gray-500); font-size: 0.9rem; }
 
+.edit-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+}
+.edit-nav-info {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    font-weight: 600;
+}
+.btn-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    background: white;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius);
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.btn-nav:hover {
+    background: var(--primary);
+    color: white;
+}
+
 .edit-form {
     background: white;
     border: 1px solid var(--gray-200);

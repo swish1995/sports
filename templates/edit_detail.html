@@ -7,6 +7,22 @@
     <span class="edit-id">#{{ q.id }}</span>
 </div>
 
+{% if prev_q or next_q %}
+<div class="edit-nav">
+    {% if prev_q %}
+    <a href="/edit/{{ prev_q.id }}?return_url={{ request.args.get('return_url', '/edit')|urlencode }}" class="btn btn-nav">
+        ← 이전 (#{{ prev_q.question_number }})
+    </a>
+    {% endif %}
+    <span class="edit-nav-info">{{ nav_subject }} {{ nav_year }}</span>
+    {% if next_q %}
+    <a href="/edit/{{ next_q.id }}?return_url={{ request.args.get('return_url', '/edit')|urlencode }}" class="btn btn-nav">
+        다음 (#{{ next_q.question_number }}) →
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
 <form action="/edit/{{ q.id }}/save" method="POST" class="edit-form" id="editForm">
     <input type="hidden" name="return_url" value="{{ request.args.get('return_url', '/edit') }}">
 
