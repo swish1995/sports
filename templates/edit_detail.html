@@ -9,17 +9,20 @@
 
 {% if prev_q or next_q %}
 <div class="edit-nav">
-    {% if prev_q %}
-    <a href="/edit/{{ prev_q.id }}?return_url={{ request.args.get('return_url', '/edit')|urlencode }}" class="btn btn-nav" data-nav="prev">
-        ← 이전 (#{{ prev_q.question_number }})
-    </a>
-    {% endif %}
-    <span class="edit-nav-info">{{ nav_subject }} {{ nav_year }}</span>
-    {% if next_q %}
-    <a href="/edit/{{ next_q.id }}?return_url={{ request.args.get('return_url', '/edit')|urlencode }}" class="btn btn-nav" data-nav="next">
-        다음 (#{{ next_q.question_number }}) →
-    </a>
-    {% endif %}
+    <a href="{{ request.args.get('return_url', '/edit') }}" class="btn btn-nav" data-nav="list">목록</a>
+    <div class="edit-nav-center">
+        {% if prev_q %}
+        <a href="/edit/{{ prev_q.id }}?return_url={{ request.args.get('return_url', '/edit')|urlencode }}" class="btn btn-nav" data-nav="prev">
+            ← 이전 (#{{ prev_q.question_number }})
+        </a>
+        {% endif %}
+        <span class="edit-nav-info">{{ nav_subject }} {{ nav_year }}</span>
+        {% if next_q %}
+        <a href="/edit/{{ next_q.id }}?return_url={{ request.args.get('return_url', '/edit')|urlencode }}" class="btn btn-nav" data-nav="next">
+            다음 (#{{ next_q.question_number }}) →
+        </a>
+        {% endif %}
+    </div>
 </div>
 {% endif %}
 

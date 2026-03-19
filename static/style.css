@@ -903,13 +903,19 @@ body {
 .edit-nav {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 1rem;
     margin-bottom: 1rem;
     padding: 0.5rem 1rem;
     background: var(--gray-50);
     border: 1px solid var(--gray-200);
     border-radius: var(--radius);
+}
+.edit-nav-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
 }
 .edit-nav-info {
     font-size: 0.85rem;
