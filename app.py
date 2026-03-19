@@ -825,8 +825,27 @@ def save_question(question_id):
     ))
     db.commit()
 
-    flash('문제가 수정되었습니다.', 'success')
-    # 필터 유지하여 목록으로 돌아가기
+    # 저장 후 다음 문제로 이동
+    exam_year = request.form.get('exam_year', '')
+    subject_id = sub['id'] if sub else q['subject_id']
+    s_row = db.execute('SELECT name FROM subjects WHERE id = ?', (subject_id,)).fetchone()
+
+    if s_row and exam_year:
+        nav_questions = db.execute('''
+            SELECT q.id FROM questions q JOIN subjects s ON q.subject_id = s.id
+            WHERE s.name = ? AND q.exam_year = ?
+            ORDER BY q.question_number
+        ''', (s_row['name'], exam_year)).fetchall()
+        ids = [r['id'] for r in nav_questions]
+        if question_id in ids:
+            idx = ids.index(question_id)
+            if idx < len(ids) - 1:
+                flash('문제가 수정되었습니다.', 'success')
+                return_url = request.form.get('return_url', url_for('edit_list'))
+                return redirect(f"/edit/{ids[idx + 1]}?return_url={return_url}")
+
+    # 마지막 문제이거나 과목/연도 없는 경우 → 목록으로
+    flash('마지막 문제입니다. 목록으로 이동합니다.', 'info')
     return redirect(request.form.get('return_url', url_for('edit_list')))
 
 

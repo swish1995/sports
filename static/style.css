@@ -201,6 +201,7 @@ body {
 }
 .flash-error { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
 .flash-success { background: #f0fdf4; color: var(--success); border: 1px solid #bbf7d0; }
+.flash-info { background: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
 
 /* ── 퀴즈 ── */
 .quiz-header {
