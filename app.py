@@ -36,13 +36,36 @@ def nl2br(text):
 
 @app.template_filter('format_question')
 def format_question(text):
-    """\\n을 <br>로 변환 (명시적 줄바꿈만)"""
+    """\\n → <br>, |가 포함된 줄 → <table> 변환"""
     if not text:
         return ''
     import html as html_mod
-    text = html_mod.escape(str(text))
-    text = text.replace('\n', '<br>')
-    return Markup(text)
+
+    lines = str(text).split('\n')
+    result = []
+    table_lines = []
+
+    def flush_table():
+        if not table_lines:
+            return
+        html_out = '<table class="q-table">'
+        for i, row in enumerate(table_lines):
+            cells = [html_mod.escape(c.strip()) for c in row.split('|')]
+            tag = 'th' if i == 0 else 'td'
+            html_out += '<tr>' + ''.join(f'<{tag}>{c}</{tag}>' for c in cells) + '</tr>'
+        html_out += '</table>'
+        result.append(html_out)
+        table_lines.clear()
+
+    for line in lines:
+        if line.count('|') >= 2:
+            table_lines.append(line)
+        else:
+            flush_table()
+            result.append(html_mod.escape(line))
+
+    flush_table()
+    return Markup('<br>'.join(result))
 
 
 # ── DB 연결 ──
@@ -721,6 +744,14 @@ def delete_question(question_id):
     db.commit()
     flash('문제가 삭제되었습니다.', 'success')
     return redirect(request.form.get('return_url', url_for('edit_list')))
+
+
+@app.route('/api/preview', methods=['POST'])
+def api_preview():
+    """문제 미리보기 API — format_question 필터 적용 결과 반환"""
+    data = request.get_json()
+    text = data.get('text', '')
+    return jsonify({'html': format_question(text)})
 
 
 def import_questions_from_pdf(filepath):

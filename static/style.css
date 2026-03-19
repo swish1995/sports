@@ -742,6 +742,40 @@ body {
     padding: 3rem;
 }
 
+/* ── 지문 내 테이블 ── */
+.q-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5rem 0;
+    font-size: 0.85rem;
+}
+.q-table th, .q-table td {
+    border: 1px solid var(--gray-300);
+    padding: 0.35rem 0.6rem;
+    text-align: center;
+}
+.q-table th {
+    background: var(--gray-100);
+    font-weight: 600;
+}
+
+/* ── 미리보기 ── */
+.preview-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+.preview-box {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 1rem;
+    background: white;
+    min-height: 80px;
+    line-height: 1.7;
+    font-size: 0.95rem;
+}
+.preview-box .q-table { font-size: 0.85rem; }
+
 /* ── 힌트 아이콘 ── */
 .hint-icon {
     display: inline-flex;

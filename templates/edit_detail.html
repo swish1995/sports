@@ -7,7 +7,19 @@
     <span class="edit-id">#{{ q.id }}</span>
 </div>
 
-<form action="/edit/{{ q.id }}/save" method="POST" class="edit-form">
+<!-- 미리보기 -->
+<div class="exam-section" id="previewSection" style="display:none">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem">
+        <h2>미리보기</h2>
+        <button type="button" class="btn btn-sm" onclick="togglePreview()">닫기</button>
+    </div>
+    <div class="question-card">
+        <div class="question-text" id="previewQuestion"></div>
+        <div class="options" id="previewOptions"></div>
+    </div>
+</div>
+
+<form action="/edit/{{ q.id }}/save" method="POST" class="edit-form" id="editForm">
     <input type="hidden" name="return_url" value="{{ request.args.get('return_url', '/edit') }}">
 
     <!-- 메타 정보 -->
@@ -38,8 +50,14 @@
 
     <!-- 지문 -->
     <div class="form-group">
-        <label>지문 <small class="hint">Enter로 줄바꿈</small></label>
-        <textarea name="question_text" rows="6" class="edit-textarea">{{ q.question_text }}</textarea>
+        <label>
+            지문 <small class="hint">Enter로 줄바꿈, | 로 표 구분</small>
+        </label>
+        <textarea name="question_text" rows="6" class="edit-textarea" id="questionText">{{ q.question_text }}</textarea>
+    </div>
+
+    <div style="margin-bottom:1rem">
+        <button type="button" class="btn btn-sm" onclick="togglePreview()">미리보기</button>
     </div>
 
     <!-- 보기 -->
@@ -47,19 +65,19 @@
     <div class="edit-options-grid">
         <div class="form-group">
             <label>① 보기 A</label>
-            <textarea name="option_a" rows="2">{{ q.option_a or '' }}</textarea>
+            <textarea name="option_a" rows="2" id="optA">{{ q.option_a or '' }}</textarea>
         </div>
         <div class="form-group">
             <label>② 보기 B</label>
-            <textarea name="option_b" rows="2">{{ q.option_b or '' }}</textarea>
+            <textarea name="option_b" rows="2" id="optB">{{ q.option_b or '' }}</textarea>
         </div>
         <div class="form-group">
             <label>③ 보기 C</label>
-            <textarea name="option_c" rows="2">{{ q.option_c or '' }}</textarea>
+            <textarea name="option_c" rows="2" id="optC">{{ q.option_c or '' }}</textarea>
         </div>
         <div class="form-group">
             <label>④ 보기 D</label>
-            <textarea name="option_d" rows="2">{{ q.option_d or '' }}</textarea>
+            <textarea name="option_d" rows="2" id="optD">{{ q.option_d or '' }}</textarea>
         </div>
     </div>
 
@@ -82,7 +100,7 @@
 
     <!-- 코멘트 -->
     <div class="form-group">
-        <label>코멘트 <small class="hint">시험 중 💡 아이콘으로 표시됨, 결과에서 해설로 표시됨, Enter로 줄바꿈</small></label>
+        <label>코멘트 <small class="hint">시험 중 💡 표시, 결과에서 해설로 표시, Enter로 줄바꿈</small></label>
         <textarea name="comment" rows="4" placeholder="해설, 암기 포인트, 헷갈리는 부분 등...">{{ q.comment or '' }}</textarea>
     </div>
 
@@ -99,4 +117,47 @@
     <input type="hidden" name="return_url" value="{{ request.args.get('return_url', '/edit') }}">
     <button type="submit" class="btn btn-danger">문제 삭제</button>
 </form>
+
+<script>
+function togglePreview() {
+    const section = document.getElementById('previewSection');
+    const visible = section.style.display !== 'none';
+    if (visible) {
+        section.style.display = 'none';
+        return;
+    }
+    // 지문 미리보기
+    const text = document.getElementById('questionText').value;
+    fetch('/api/preview', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text: text})
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('previewQuestion').innerHTML = data.html;
+    });
+
+    // 보기 미리보기
+    const opts = document.getElementById('previewOptions');
+    if (opts) {
+        const ids = ['optA', 'optB', 'optC', 'optD'];
+        const labels = ['1', '2', '3', '4'];
+        let html = '';
+        ids.forEach((id, i) => {
+            const el = document.getElementById(id);
+            if (el && el.value.trim()) {
+                html += `<div class="option-label" style="pointer-events:none">
+                    <span class="option-key">${labels[i]}</span>
+                    <span class="option-text">${el.value}</span>
+                </div>`;
+            }
+        });
+        opts.innerHTML = html;
+    }
+
+    section.style.display = 'block';
+    section.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+</script>
 {% endblock %}
