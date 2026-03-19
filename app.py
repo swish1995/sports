@@ -141,27 +141,8 @@ def import_questions_from_simple_json(filepath):
         if not sub:
             continue
 
-        # 중복 체크: 같은 과목 + 같은 연도 + 같은 문항번호
-        if q.get('exam_year') and q.get('question_number'):
-            exists = db.execute(
-                'SELECT id FROM questions WHERE subject_id = ? AND exam_year = ? AND question_number = ?',
-                (sub['id'], q['exam_year'], q['question_number'])
-            ).fetchone()
-        else:
-            exists = db.execute(
-                'SELECT id FROM questions WHERE question_text = ? AND subject_id = ?',
-                (q['question'], sub['id'])
-            ).fetchone()
-        if exists:
-            continue
-
         opts = q.get('options', [])
-        db.execute('''
-            INSERT INTO questions
-            (subject_id, question_type, question_text, option_a, option_b, option_c, option_d,
-             correct_answer, explanation, difficulty, exam_year, exam_type, question_number, source)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
+        values = (
             sub['id'], q.get('type', 'multiple_choice'), q['question'],
             opts[0] if len(opts) > 0 else None,
             opts[1] if len(opts) > 1 else None,
@@ -169,12 +150,38 @@ def import_questions_from_simple_json(filepath):
             opts[3] if len(opts) > 3 else None,
             q.get('answer', ''),
             q.get('explanation', ''),
+            q.get('comment', ''),
             q.get('difficulty', 2),
             q.get('exam_year', None),
             q.get('exam_type', None),
             q.get('question_number', None),
             q.get('source', '')
-        ))
+        )
+
+        # 중복 체크: 같은 과목 + 같은 연도 + 같은 문항번호
+        exists = None
+        if q.get('exam_year') and q.get('question_number'):
+            exists = db.execute(
+                'SELECT id FROM questions WHERE subject_id = ? AND exam_year = ? AND question_number = ?',
+                (sub['id'], q['exam_year'], q['question_number'])
+            ).fetchone()
+
+        if exists:
+            # 기존 문제 업데이트
+            db.execute('''
+                UPDATE questions SET
+                    question_type=?, question_text=?, option_a=?, option_b=?, option_c=?, option_d=?,
+                    correct_answer=?, explanation=?, comment=?, difficulty=?,
+                    exam_year=?, exam_type=?, question_number=?, source=?
+                WHERE id=?
+            ''', values[1:] + (exists['id'],))
+        else:
+            db.execute('''
+                INSERT INTO questions
+                (subject_id, question_type, question_text, option_a, option_b, option_c, option_d,
+                 correct_answer, explanation, comment, difficulty, exam_year, exam_type, question_number, source)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', values)
         count += 1
 
     db.commit()
@@ -651,6 +658,44 @@ def manage_import():
     except Exception as e:
         flash(f'임포트 오류: {str(e)}', 'error')
 
+    return redirect(url_for('manage'))
+
+
+@app.route('/manage/export', methods=['POST'])
+def manage_export():
+    """DB의 모든 문제를 questions/all_questions.json으로 export"""
+    db = get_db()
+    rows = db.execute('''
+        SELECT q.*, s.name as subject_name
+        FROM questions q JOIN subjects s ON q.subject_id = s.id
+        ORDER BY q.exam_year, s.name, q.question_number
+    ''').fetchall()
+
+    questions = []
+    for r in rows:
+        q = {
+            'subject': r['subject_name'],
+            'type': r['question_type'],
+            'question': r['question_text'],
+            'options': [r['option_a'] or '', r['option_b'] or '', r['option_c'] or '', r['option_d'] or ''],
+            'answer': r['correct_answer'] or '',
+            'explanation': r['explanation'] or '',
+            'comment': r['comment'] or '',
+            'exam_year': r['exam_year'] or '',
+            'exam_type': r['exam_type'] or '',
+            'question_number': r['question_number'],
+            'source': r['source'] or '',
+        }
+        # 빈 옵션 제거
+        q['options'] = [o for o in q['options'] if o]
+        questions.append(q)
+
+    os.makedirs(QUESTIONS_DIR, exist_ok=True)
+    output_path = os.path.join(QUESTIONS_DIR, 'all_questions.json')
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(questions, f, ensure_ascii=False, indent=2)
+
+    flash(f'{len(questions)}개 문제를 all_questions.json으로 내보냈습니다.', 'success')
     return redirect(url_for('manage'))
 
 
