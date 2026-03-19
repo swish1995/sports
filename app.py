@@ -822,6 +822,26 @@ def api_preview():
     return jsonify({'html': format_question(text)})
 
 
+@app.route('/api/upload-image', methods=['POST'])
+def api_upload_image():
+    """클립보드 이미지 업로드 → static/images/에 UUID 파일명으로 저장"""
+    import uuid
+    if 'image' not in request.files:
+        return jsonify({'error': '이미지가 없습니다'}), 400
+
+    file = request.files['image']
+    ext = os.path.splitext(file.filename)[1] if file.filename else '.png'
+    if ext not in ('.png', '.jpg', '.jpeg', '.gif', '.webp'):
+        ext = '.png'
+
+    filename = f'{uuid.uuid4().hex[:12]}{ext}'
+    img_dir = os.path.join(os.path.dirname(__file__), 'static', 'images')
+    os.makedirs(img_dir, exist_ok=True)
+    file.save(os.path.join(img_dir, filename))
+
+    return jsonify({'filename': filename, 'tag': f'[img:{filename}]'})
+
+
 def import_questions_from_pdf(filepath):
     """PDF에서 문제 추출 - PyMuPDF 사용"""
     import fitz
