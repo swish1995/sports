@@ -768,13 +768,44 @@ body {
     font-weight: 600;
 }
 
-/* ── 미리보기 ── */
-.preview-sticky {
+/* ── 좌우 분할 (입력 / 미리보기) ── */
+.edit-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+.edit-left { min-width: 0; }
+.edit-right { min-width: 0; }
+.preview-panel {
     position: sticky;
-    top: 60px;
-    z-index: 10;
-    max-height: 40vh;
+    top: 64px;
     overflow-y: auto;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 1rem;
+    background: var(--gray-50);
+}
+.preview-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.preview-panel .question-card {
+    margin-bottom: 0;
+}
+
+@media (max-width: 800px) {
+    .edit-split {
+        grid-template-columns: 1fr;
+    }
+    .preview-panel {
+        position: static;
+        max-height: none !important;
+    }
 }
 
 /* ── 힌트 아이콘 ── */

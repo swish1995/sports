@@ -7,26 +7,6 @@
     <span class="edit-id">#{{ q.id }}</span>
 </div>
 
-<!-- 실시간 미리보기 (상단 고정) -->
-<div class="exam-section preview-sticky" id="previewSection">
-    <h2>미리보기</h2>
-    <div class="question-card">
-        <div class="question-text" id="previewQuestion">{{ q.question_text|format_question }}</div>
-        <div class="options" id="previewOptions">
-            {% if q.question_type == 'multiple_choice' %}
-            {% for opt_val in [q.option_a, q.option_b, q.option_c, q.option_d] %}
-            {% if opt_val %}
-            <div class="option-label" style="pointer-events:none">
-                <span class="option-key">{{ loop.index }}</span>
-                <span class="option-text">{{ opt_val }}</span>
-            </div>
-            {% endif %}
-            {% endfor %}
-            {% endif %}
-        </div>
-    </div>
-</div>
-
 <form action="/edit/{{ q.id }}/save" method="POST" class="edit-form" id="editForm">
     <input type="hidden" name="return_url" value="{{ request.args.get('return_url', '/edit') }}">
 
@@ -56,51 +36,77 @@
         </div>
     </div>
 
-    <!-- 지문 -->
-    <div class="form-group">
-        <label>
-            지문 <small class="hint">Enter=줄바꿈 | =표구분 [img:파일]=이미지 / Ctrl+V로 이미지 붙여넣기</small>
-        </label>
-        <textarea name="question_text" rows="8" class="edit-textarea" id="questionText">{{ q.question_text }}</textarea>
-    </div>
+    <!-- 지문 + 보기 / 미리보기 좌우 분할 -->
+    <div class="edit-split">
+        <!-- 왼쪽: 입력 -->
+        <div class="edit-left" id="editLeft">
+            <div class="form-group">
+                <label>
+                    지문 <small class="hint">Enter=줄바꿈 | =표 [img:파일]=이미지 / Ctrl+V 이미지 붙여넣기</small>
+                </label>
+                <textarea name="question_text" rows="10" class="edit-textarea" id="questionText">{{ q.question_text }}</textarea>
+            </div>
 
-    <!-- 보기 -->
-    {% if q.question_type == 'multiple_choice' %}
-    <div class="edit-options-grid">
-        <div class="form-group">
-            <label>① 보기 A</label>
-            <textarea name="option_a" rows="2" id="optA" class="opt-input">{{ q.option_a or '' }}</textarea>
-        </div>
-        <div class="form-group">
-            <label>② 보기 B</label>
-            <textarea name="option_b" rows="2" id="optB" class="opt-input">{{ q.option_b or '' }}</textarea>
-        </div>
-        <div class="form-group">
-            <label>③ 보기 C</label>
-            <textarea name="option_c" rows="2" id="optC" class="opt-input">{{ q.option_c or '' }}</textarea>
-        </div>
-        <div class="form-group">
-            <label>④ 보기 D</label>
-            <textarea name="option_d" rows="2" id="optD" class="opt-input">{{ q.option_d or '' }}</textarea>
-        </div>
-    </div>
+            {% if q.question_type == 'multiple_choice' %}
+            <div class="edit-options-grid">
+                <div class="form-group">
+                    <label>① 보기 A</label>
+                    <textarea name="option_a" rows="2" id="optA" class="opt-input">{{ q.option_a or '' }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>② 보기 B</label>
+                    <textarea name="option_b" rows="2" id="optB" class="opt-input">{{ q.option_b or '' }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>③ 보기 C</label>
+                    <textarea name="option_c" rows="2" id="optC" class="opt-input">{{ q.option_c or '' }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>④ 보기 D</label>
+                    <textarea name="option_d" rows="2" id="optD" class="opt-input">{{ q.option_d or '' }}</textarea>
+                </div>
+            </div>
 
-    <div class="form-group">
-        <label>정답</label>
-        <select name="correct_answer" class="answer-select">
-            <option value="A" {{ 'selected' if q.correct_answer == 'A' }}>① A</option>
-            <option value="B" {{ 'selected' if q.correct_answer == 'B' }}>② B</option>
-            <option value="C" {{ 'selected' if q.correct_answer == 'C' }}>③ C</option>
-            <option value="D" {{ 'selected' if q.correct_answer == 'D' }}>④ D</option>
-            <option value="ALL" {{ 'selected' if q.correct_answer == 'ALL' }}>전부 정답</option>
-        </select>
+            <div class="form-group">
+                <label>정답</label>
+                <select name="correct_answer" class="answer-select">
+                    <option value="A" {{ 'selected' if q.correct_answer == 'A' }}>① A</option>
+                    <option value="B" {{ 'selected' if q.correct_answer == 'B' }}>② B</option>
+                    <option value="C" {{ 'selected' if q.correct_answer == 'C' }}>③ C</option>
+                    <option value="D" {{ 'selected' if q.correct_answer == 'D' }}>④ D</option>
+                    <option value="ALL" {{ 'selected' if q.correct_answer == 'ALL' }}>전부 정답</option>
+                </select>
+            </div>
+            {% else %}
+            <div class="form-group">
+                <label>모범답안</label>
+                <textarea name="correct_answer" rows="4">{{ q.correct_answer or '' }}</textarea>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 오른쪽: 미리보기 -->
+        <div class="edit-right" id="editRight">
+            <div class="preview-panel" id="previewPanel">
+                <div class="preview-label">미리보기</div>
+                <div class="question-card">
+                    <div class="question-text" id="previewQuestion">{{ q.question_text|format_question }}</div>
+                    <div class="options" id="previewOptions">
+                        {% if q.question_type == 'multiple_choice' %}
+                        {% for opt_val in [q.option_a, q.option_b, q.option_c, q.option_d] %}
+                        {% if opt_val %}
+                        <div class="option-label" style="pointer-events:none">
+                            <span class="option-key">{{ loop.index }}</span>
+                            <span class="option-text">{{ opt_val }}</span>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    {% else %}
-    <div class="form-group">
-        <label>모범답안</label>
-        <textarea name="correct_answer" rows="4">{{ q.correct_answer or '' }}</textarea>
-    </div>
-    {% endif %}
 
     <!-- 코멘트 -->
     <div class="form-group">
@@ -132,7 +138,6 @@ function schedulePreview() {
 }
 
 function updatePreview() {
-    // 지문
     const text = document.getElementById('questionText').value;
     fetch('/api/preview', {
         method: 'POST',
@@ -144,7 +149,6 @@ function updatePreview() {
         document.getElementById('previewQuestion').innerHTML = data.html;
     });
 
-    // 보기
     const opts = document.getElementById('previewOptions');
     if (opts) {
         const ids = ['optA', 'optB', 'optC', 'optD'];
@@ -163,11 +167,22 @@ function updatePreview() {
     }
 }
 
-// 지문 + 보기 입력 시 실시간 반영
 document.getElementById('questionText').addEventListener('input', schedulePreview);
 document.querySelectorAll('.opt-input').forEach(el => {
     el.addEventListener('input', schedulePreview);
 });
+
+// ── 미리보기 높이 동기화 ──
+function syncPreviewHeight() {
+    const left = document.getElementById('editLeft');
+    const panel = document.getElementById('previewPanel');
+    if (left && panel) {
+        panel.style.maxHeight = left.offsetHeight + 'px';
+    }
+}
+const resizeObserver = new ResizeObserver(syncPreviewHeight);
+resizeObserver.observe(document.getElementById('editLeft'));
+syncPreviewHeight();
 
 // ── 클립보드 이미지 붙여넣기 ──
 document.getElementById('questionText').addEventListener('paste', function(e) {
@@ -181,7 +196,6 @@ document.getElementById('questionText').addEventListener('paste', function(e) {
             const formData = new FormData();
             formData.append('image', file, 'paste.png');
 
-            // 업로드 중 표시
             const ta = this;
             const pos = ta.selectionStart;
             const before = ta.value.substring(0, pos);
