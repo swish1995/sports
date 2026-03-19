@@ -7,7 +7,6 @@
     <span class="edit-id">#{{ q.id }}</span>
 </div>
 
-{% if prev_q or next_q %}
 <div class="edit-nav">
     <a href="{{ request.args.get('return_url', '/edit') }}" class="btn btn-nav" data-nav="list">목록</a>
     <div class="edit-nav-center">
@@ -15,16 +14,19 @@
         <a href="/edit/{{ prev_q.id }}?return_url={{ request.args.get('return_url', '/edit')|urlencode }}" class="btn btn-nav" data-nav="prev">
             ← 이전 (#{{ prev_q.question_number }})
         </a>
+        {% else %}
+        <span class="btn btn-nav disabled">← 이전</span>
         {% endif %}
         <span class="edit-nav-info">{{ nav_subject }} {{ nav_year }}</span>
         {% if next_q %}
         <a href="/edit/{{ next_q.id }}?return_url={{ request.args.get('return_url', '/edit')|urlencode }}" class="btn btn-nav" data-nav="next">
             다음 (#{{ next_q.question_number }}) →
         </a>
+        {% else %}
+        <a href="{{ request.args.get('return_url', '/edit') }}" class="btn btn-nav" data-nav="last">다음 →</a>
         {% endif %}
     </div>
 </div>
-{% endif %}
 
 <!-- 커스텀 알림 모달 -->
 <div class="custom-modal-overlay" id="modalOverlay">
@@ -223,26 +225,40 @@ form.addEventListener('submit', function(e) {
     });
 });
 
-// ── 이전/다음 버튼 더티 체크 ──
+// ── 이전/다음/목록 버튼 더티 체크 ──
+function navigateTo(href, isLast) {
+    function goOrLast() {
+        if (isLast) {
+            showModal('마지막 문제입니다. 목록으로 이동합니다.', [
+                { text: '확인', cls: 'btn-primary', onClick: () => location.href = href }
+            ]);
+        } else {
+            location.href = href;
+        }
+    }
+
+    if (!isDirty()) { goOrLast(); return; }
+
+    showModal('변경 사항이 있습니다. 저장하고 이동하시겠습니까?', [
+        { text: '저장하고 이동', cls: 'btn-primary', onClick: () => {
+            saveViaAjax().then(data => {
+                if (data.success) {
+                    markClean();
+                    showModal('저장되었습니다.', [
+                        { text: '확인', cls: 'btn-primary', onClick: () => goOrLast() }
+                    ]);
+                }
+            });
+        }},
+        { text: '저장하지 않고 이동', cls: 'btn-secondary', onClick: () => goOrLast() },
+        { text: '취소', cls: 'btn-secondary', onClick: () => {} }
+    ]);
+}
+
 document.querySelectorAll('[data-nav]').forEach(btn => {
     btn.addEventListener('click', function(e) {
-        if (!isDirty()) return; // 변경 없으면 그냥 이동
         e.preventDefault();
-        const href = this.href;
-        showModal('변경 사항이 있습니다. 저장하고 이동하시겠습니까?', [
-            { text: '저장하고 이동', cls: 'btn-primary', onClick: () => {
-                saveViaAjax().then(data => {
-                    if (data.success) {
-                        markClean();
-                        showModal('저장되었습니다.', [
-                            { text: '확인', cls: 'btn-primary', onClick: () => location.href = href }
-                        ]);
-                    }
-                });
-            }},
-            { text: '저장하지 않고 이동', cls: 'btn-secondary', onClick: () => location.href = href },
-            { text: '취소', cls: 'btn-secondary', onClick: () => {} }
-        ]);
+        navigateTo(this.href, this.dataset.nav === 'last');
     });
 });
 

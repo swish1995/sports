@@ -704,8 +704,6 @@ def manage_export():
 @app.route('/edit')
 def edit_list():
     db = get_db()
-    subject_filter = request.args.get('subject', '')
-    year_filter = request.args.get('year', '')
     page = request.args.get('page', 1, type=int)
     per_page = 20
 
@@ -713,23 +711,18 @@ def edit_list():
     subjects = db.execute('SELECT DISTINCT name FROM subjects WHERE category = "written" ORDER BY name').fetchall()
     years = db.execute('SELECT DISTINCT exam_year FROM questions WHERE exam_year IS NOT NULL AND exam_year != "" ORDER BY exam_year DESC').fetchall()
 
+    # 기본값: 가장 최근 연도, 첫 번째 과목
+    subject_filter = request.args.get('subject', subjects[0]['name'] if subjects else '')
+    year_filter = request.args.get('year', years[0]['exam_year'] if years else '')
+
     query = '''
         SELECT q.*, s.name as subject_name
         FROM questions q
         JOIN subjects s ON q.subject_id = s.id
-        WHERE 1=1
+        WHERE s.name = ? AND q.exam_year = ?
     '''
-    count_query = 'SELECT COUNT(*) FROM questions q JOIN subjects s ON q.subject_id = s.id WHERE 1=1'
-    params = []
-
-    if subject_filter:
-        query += ' AND s.name = ?'
-        count_query += ' AND s.name = ?'
-        params.append(subject_filter)
-    if year_filter:
-        query += ' AND q.exam_year = ?'
-        count_query += ' AND q.exam_year = ?'
-        params.append(year_filter)
+    count_query = 'SELECT COUNT(*) FROM questions q JOIN subjects s ON q.subject_id = s.id WHERE s.name = ? AND q.exam_year = ?'
+    params = [subject_filter, year_filter]
 
     total = db.execute(count_query, params).fetchone()[0]
     total_pages = (total + per_page - 1) // per_page

@@ -940,6 +940,13 @@ body {
     background: var(--primary);
     color: white;
 }
+.btn-nav.disabled {
+    color: var(--gray-300);
+    border-color: var(--gray-200);
+    background: var(--gray-50);
+    cursor: default;
+    pointer-events: none;
+}
 
 /* ── 커스텀 모달 ── */
 .custom-modal-overlay {
