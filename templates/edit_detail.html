@@ -10,18 +10,26 @@
 {% if prev_q or next_q %}
 <div class="edit-nav">
     {% if prev_q %}
-    <a href="/edit/{{ prev_q.id }}?return_url={{ request.args.get('return_url', '/edit')|urlencode }}" class="btn btn-nav">
+    <a href="/edit/{{ prev_q.id }}?return_url={{ request.args.get('return_url', '/edit')|urlencode }}" class="btn btn-nav" data-nav="prev">
         ← 이전 (#{{ prev_q.question_number }})
     </a>
     {% endif %}
     <span class="edit-nav-info">{{ nav_subject }} {{ nav_year }}</span>
     {% if next_q %}
-    <a href="/edit/{{ next_q.id }}?return_url={{ request.args.get('return_url', '/edit')|urlencode }}" class="btn btn-nav">
+    <a href="/edit/{{ next_q.id }}?return_url={{ request.args.get('return_url', '/edit')|urlencode }}" class="btn btn-nav" data-nav="next">
         다음 (#{{ next_q.question_number }}) →
     </a>
     {% endif %}
 </div>
 {% endif %}
+
+<!-- 커스텀 알림 모달 -->
+<div class="custom-modal-overlay" id="modalOverlay">
+    <div class="custom-modal">
+        <div class="custom-modal-body" id="modalMessage"></div>
+        <div class="custom-modal-actions" id="modalActions"></div>
+    </div>
+</div>
 
 <form action="/edit/{{ q.id }}/save" method="POST" class="edit-form" id="editForm">
     <input type="hidden" name="return_url" value="{{ request.args.get('return_url', '/edit') }}">
@@ -145,6 +153,96 @@
 </form>
 
 <script>
+// ── 커스텀 모달 ──
+function showModal(message, buttons) {
+    const overlay = document.getElementById('modalOverlay');
+    document.getElementById('modalMessage').textContent = message;
+    const actions = document.getElementById('modalActions');
+    actions.innerHTML = '';
+    buttons.forEach(btn => {
+        const el = document.createElement('button');
+        el.textContent = btn.text;
+        el.className = 'btn ' + (btn.cls || 'btn-secondary');
+        el.onclick = () => { overlay.classList.remove('show'); btn.onClick(); };
+        actions.appendChild(el);
+    });
+    overlay.classList.add('show');
+}
+
+// ── 더티 체크 ──
+const form = document.getElementById('editForm');
+let initialState = new FormData(form);
+let initialMap = {};
+for (let [k, v] of initialState.entries()) initialMap[k] = v;
+
+function isDirty() {
+    const current = new FormData(form);
+    for (let [k, v] of current.entries()) {
+        if (k === 'return_url') continue;
+        if (initialMap[k] !== v) return true;
+    }
+    return false;
+}
+
+function markClean() {
+    const current = new FormData(form);
+    initialMap = {};
+    for (let [k, v] of current.entries()) initialMap[k] = v;
+}
+
+// ── AJAX 저장 ──
+function saveViaAjax() {
+    return fetch(form.action, {
+        method: 'POST',
+        headers: {'X-Requested-With': 'XMLHttpRequest'},
+        body: new FormData(form)
+    }).then(r => r.json());
+}
+
+// ── 저장 버튼 (AJAX + 커스텀 알림 후 다음 이동) ──
+form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    saveViaAjax().then(data => {
+        if (data.success) {
+            markClean();
+            const nextBtn = document.querySelector('[data-nav="next"]');
+            if (nextBtn) {
+                showModal('저장되었습니다.', [
+                    { text: '확인', cls: 'btn-primary', onClick: () => location.href = nextBtn.href }
+                ]);
+            } else {
+                const returnUrl = form.querySelector('[name="return_url"]').value || '/edit';
+                showModal('마지막 문제입니다. 목록으로 이동합니다.', [
+                    { text: '확인', cls: 'btn-primary', onClick: () => location.href = returnUrl }
+                ]);
+            }
+        }
+    });
+});
+
+// ── 이전/다음 버튼 더티 체크 ──
+document.querySelectorAll('[data-nav]').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        if (!isDirty()) return; // 변경 없으면 그냥 이동
+        e.preventDefault();
+        const href = this.href;
+        showModal('변경 사항이 있습니다. 저장하고 이동하시겠습니까?', [
+            { text: '저장하고 이동', cls: 'btn-primary', onClick: () => {
+                saveViaAjax().then(data => {
+                    if (data.success) {
+                        markClean();
+                        showModal('저장되었습니다.', [
+                            { text: '확인', cls: 'btn-primary', onClick: () => location.href = href }
+                        ]);
+                    }
+                });
+            }},
+            { text: '저장하지 않고 이동', cls: 'btn-secondary', onClick: () => location.href = href },
+            { text: '취소', cls: 'btn-secondary', onClick: () => {} }
+        ]);
+    });
+});
+
 // ── 실시간 미리보기 ──
 let previewTimer = null;
 

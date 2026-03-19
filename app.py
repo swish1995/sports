@@ -825,6 +825,10 @@ def save_question(question_id):
     ))
     db.commit()
 
+    # AJAX 요청이면 JSON 응답
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True})
+
     # 저장 후 다음 문제로 이동
     exam_year = request.form.get('exam_year', '')
     subject_id = sub['id'] if sub else q['subject_id']

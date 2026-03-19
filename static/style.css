@@ -935,6 +935,39 @@ body {
     color: white;
 }
 
+/* ── 커스텀 모달 ── */
+.custom-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+.custom-modal-overlay.show {
+    display: flex;
+}
+.custom-modal {
+    background: white;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    min-width: 320px;
+    max-width: 440px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+.custom-modal-body {
+    font-size: 0.95rem;
+    color: var(--gray-900);
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+}
+.custom-modal-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
 .edit-form {
     background: white;
     border: 1px solid var(--gray-200);
