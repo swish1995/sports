@@ -78,7 +78,14 @@ def format_question(text):
             table_lines.append(line)
         else:
             flush_table()
-            result.append(html_mod.escape(line))
+            # [img:파일명] → <img> 태그 변환
+            escaped = html_mod.escape(line)
+            escaped = re.sub(
+                r'\[img:([^\]]+)\]',
+                r'<img src="/static/images/\1" class="q-img" alt="문제 이미지">',
+                escaped
+            )
+            result.append(escaped)
 
     flush_table()
     return Markup('<br>'.join(result))

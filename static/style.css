@@ -742,6 +742,15 @@ body {
     padding: 3rem;
 }
 
+/* ── 지문 내 이미지 ── */
+.q-img {
+    display: block;
+    max-width: 100%;
+    margin: 0.5rem 0;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+}
+
 /* ── 지문 내 테이블 ── */
 .q-table {
     width: 100%;

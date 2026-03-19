@@ -8,6 +8,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./questions:/app/questions
+      - ./static/images:/app/static/images
     environment:
       - FLASK_ENV=development
     restart: unless-stopped
