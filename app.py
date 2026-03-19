@@ -50,9 +50,25 @@ def format_question(text):
             return
         html_out = '<table class="q-table">'
         for i, row in enumerate(table_lines):
-            cells = [html_mod.escape(c.strip()) for c in row.split('|')]
+            raw_cells = [c.strip() for c in row.split('|')]
+            # 앞뒤 빈 셀 제거 (선행/후행 | 때문에 생기는 빈 문자열)
+            while raw_cells and raw_cells[0] == '':
+                raw_cells.pop(0)
+            while raw_cells and raw_cells[-1] == '':
+                raw_cells.pop()
             tag = 'th' if i == 0 else 'td'
-            html_out += '<tr>' + ''.join(f'<{tag}>{c}</{tag}>' for c in cells) + '</tr>'
+            # colspan 처리: - 이면 앞 셀에 병합
+            merged = []
+            for cell in raw_cells:
+                if cell == '-' and merged:
+                    merged[-1]['span'] += 1
+                else:
+                    merged.append({'text': html_mod.escape(cell), 'span': 1})
+            html_out += '<tr>'
+            for m in merged:
+                cs = f' colspan="{m["span"]}"' if m['span'] > 1 else ''
+                html_out += f'<{tag}{cs}>{m["text"]}</{tag}>'
+            html_out += '</tr>'
         html_out += '</table>'
         result.append(html_out)
         table_lines.clear()
