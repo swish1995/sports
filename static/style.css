@@ -940,6 +940,17 @@ body {
     background: var(--primary);
     color: white;
 }
+.btn-nav kbd {
+    font-family: inherit;
+    font-size: 0.7rem;
+    padding: 0.1rem 0.3rem;
+    background: rgba(0,0,0,0.06);
+    border-radius: 3px;
+    margin-left: 0.25rem;
+    color: var(--gray-500);
+}
+.btn-nav:hover kbd { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.15); }
+.btn-nav.disabled kbd { color: var(--gray-300); }
 .btn-nav.disabled {
     color: var(--gray-300);
     border-color: var(--gray-200);

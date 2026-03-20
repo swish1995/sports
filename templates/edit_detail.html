@@ -12,18 +12,18 @@
     <div class="edit-nav-center">
         {% if prev_q %}
         <a href="/edit/{{ prev_q.id }}?return_url={{ request.args.get('return_url', '/edit')|urlencode }}" class="btn btn-nav" data-nav="prev">
-            ← 이전 (#{{ prev_q.question_number }})
+            ← 이전 (#{{ prev_q.question_number }}) <kbd>Alt+P</kbd>
         </a>
         {% else %}
-        <span class="btn btn-nav disabled">← 이전</span>
+        <span class="btn btn-nav disabled">← 이전 <kbd>Alt+P</kbd></span>
         {% endif %}
         <span class="edit-nav-info">{{ nav_subject }} {{ nav_year }}</span>
         {% if next_q %}
         <a href="/edit/{{ next_q.id }}?return_url={{ request.args.get('return_url', '/edit')|urlencode }}" class="btn btn-nav" data-nav="next">
-            다음 (#{{ next_q.question_number }}) →
+            다음 (#{{ next_q.question_number }}) → <kbd>Alt+N</kbd>
         </a>
         {% else %}
-        <a href="{{ request.args.get('return_url', '/edit') }}" class="btn btn-nav" data-nav="last">다음 →</a>
+        <a href="{{ request.args.get('return_url', '/edit') }}" class="btn btn-nav" data-nav="last">다음 → <kbd>Alt+N</kbd></a>
         {% endif %}
     </div>
 </div>
@@ -262,9 +262,9 @@ document.querySelectorAll('[data-nav]').forEach(btn => {
     });
 });
 
-// ── 단축키: Cmd/Ctrl+P 이전, Cmd/Ctrl+N 다음 ──
+// ── 단축키: Alt+P 이전, Alt+N 다음 ──
 document.addEventListener('keydown', function(e) {
-    if (!(e.metaKey || e.ctrlKey)) return;
+    if (!e.altKey || e.metaKey || e.ctrlKey || e.shiftKey) return;
     const key = e.key.toLowerCase();
     if (key === 'p' || key === 'n') {
         e.preventDefault();
