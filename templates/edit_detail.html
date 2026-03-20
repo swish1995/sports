@@ -262,6 +262,19 @@ document.querySelectorAll('[data-nav]').forEach(btn => {
     });
 });
 
+// ── 단축키: Cmd/Ctrl+P 이전, Cmd/Ctrl+N 다음 ──
+document.addEventListener('keydown', function(e) {
+    if (!(e.metaKey || e.ctrlKey)) return;
+    const key = e.key.toLowerCase();
+    if (key === 'p' || key === 'n') {
+        e.preventDefault();
+        const nav = key === 'p'
+            ? document.querySelector('[data-nav="prev"]')
+            : (document.querySelector('[data-nav="next"]') || document.querySelector('[data-nav="last"]'));
+        if (nav) nav.click();
+    }
+});
+
 // ── 실시간 미리보기 ──
 let previewTimer = null;
 
