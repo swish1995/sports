@@ -822,12 +822,18 @@ body {
     transition: opacity 0.2s;
 }
 .hint-icon:hover { opacity: 1; }
-.tooltip-hint {
-    max-width: 300px;
-    white-space: normal;
-    line-height: 1.5;
-    text-align: left;
+.hint-box {
+    display: none;
+    background: #fffbe6;
+    border: 1px solid #fbbf24;
+    border-radius: var(--radius);
+    padding: 0.6rem 0.9rem;
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--gray-700);
 }
+.hint-box.show { display: block; }
 
 /* ── 문제 편집 ── */
 .text-muted { font-size: 0.8rem; color: var(--gray-500); font-weight: 400; }

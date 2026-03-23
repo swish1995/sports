@@ -64,12 +64,8 @@
                 </div>
                 {% endif %}
                 {% if a.comment %}
-                <div class="exam-info-tooltip">
-                    <span class="hint-icon">💡</span>
-                    <div class="tooltip-content tooltip-hint">
-                        {{ a.comment|nl2br }}
-                    </div>
-                </div>
+                <span class="hint-icon" onclick="this.nextElementSibling.classList.toggle('show')">💡</span>
+                <div class="hint-box">{{ a.comment|nl2br }}</div>
                 {% endif %}
             </div>
             <div class="question-text">{{ a.question_text|format_question }}</div>
